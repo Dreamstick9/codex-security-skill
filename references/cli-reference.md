@@ -1,14 +1,14 @@
 # Codex Security CLI Reference
 
-The `@openai/codex-security` CLI provides a unified command line interface for vulnerability scanning, validation, patch generation, false-positive triage, and history tracking.
+The `@openai/codex-security` command-line interface provides tools for vulnerability discovery, finding validation, patch generation, and scan history tracking.
 
 ## Invocation
 
 ```bash
-# Run directly via npx:
+# Run with npx:
 npx @openai/codex-security <command> [options]
 
-# Or install globally / locally:
+# Or install globally:
 npm install -g @openai/codex-security
 codex-security <command> [options]
 ```
@@ -19,10 +19,10 @@ codex-security <command> [options]
 
 | Option | Type | Description |
 | :--- | :--- | :--- |
-| `--help`, `-h` | boolean | Show help information. |
+| `--help`, `-h` | boolean | Show command help. |
 | `--version` | boolean | Print installed package and plugin versions. |
-| `--json` | boolean | Format output as JSON (where supported). |
-| `--dry-run` | boolean | Perform local preflight checks without model execution or network calls. |
+| `--json` | boolean | Output results as JSON. |
+| `--dry-run` | boolean | Perform local validation checks without running models or network calls. |
 
 ---
 
@@ -30,63 +30,63 @@ codex-security <command> [options]
 
 ### 1. `scan [repository]`
 
-Run a security scan on a repository or current directory.
+Execute a security scan on a repository path or current directory.
 
 ```bash
 npx @openai/codex-security scan [path] [options]
 ```
 
-#### Scan Targets & Scoping
-- `[path]`: Path to repository or directory (defaults to current working directory `.`).
-- `--path <path>`: Scope scan to specific directory or file relative to repository root. Repeatable.
-- `--diff <git-ref>`: Scan committed changes against a Git ref (e.g., `origin/main`, `HEAD~1`).
-- `--working-tree`: Scan staged and unstaged working-tree modifications.
-- `--head <ref>` / `--base <ref>`: Specific head and base commits for diff-based scanning.
+#### Scan Targets
+- `[path]`: Path to repository directory. Defaults to current working directory (`.`).
+- `--path <path>`: Limit scan to specific relative file or folder. Repeat flag for multiple paths.
+- `--diff <git-ref>`: Scan files changed against a Git reference (for example, `origin/main`).
+- `--working-tree`: Scan uncommitted staged and unstaged changes.
+- `--head <ref>` / `--base <ref>`: Set explicit head and base commits for diff scans.
 
-#### Scan Modes & Execution Limits
-- `--mode <standard|deep>`: Scan mode (`standard` default; `deep` for multi-pass exploration).
-- `--workers <count>`: Number of concurrent discovery workers (in deep mode or component scans).
-- `--subagents <count>`: Subagents allocated per worker in deep mode.
-- `--max-cost <usd>`: Stop scan when estimated LLM cost exceeds this threshold in USD (e.g., `10.00`).
-- `--max-time-hours <hours>`: Max deep scan runtime in hours (up to 96 hours).
-- `--stop-after-no-new <count>`: In deep mode, stop after `N` consecutive passes find no new vulnerabilities.
-- `--max-discovery-runs <count>`: Max total discovery iterations in deep mode.
+#### Scan Modes and Resource Limits
+- `--mode <standard|deep>`: Select scan mode (`standard` or `deep`). Default is `standard`.
+- `--workers <count>`: Number of concurrent discovery workers.
+- `--subagents <count>`: Number of subagents per discovery worker in deep mode.
+- `--max-cost <usd>`: Stop scan when estimated LLM cost exceeds this value in USD.
+- `--max-time-hours <hours>`: Maximum deep scan duration in hours (up to 96 hours).
+- `--stop-after-no-new <count>`: Stop deep scan after `N` consecutive passes find no new vulnerabilities.
+- `--max-discovery-runs <count>`: Maximum discovery iterations in deep mode.
 
-#### Context & Knowledge Base
-- `--knowledge-base <path>`: Path to architecture document, threat model, or security policy (Markdown, PDF, docx, txt). Repeatable.
-- `--scan-prompt-file <path>`: Custom instructions injected into discovery workers.
-- `--validation-prompt-file <path>`: Custom instructions injected into validation phase.
+#### Context and Knowledge Base
+- `--knowledge-base <path>`: Path to architecture documentation or threat models. Repeat flag for multiple files.
+- `--scan-prompt-file <path>`: Custom instructions for discovery workers.
+- `--validation-prompt-file <path>`: Custom instructions for validation workers.
 - `--post-scan-prompt-file <path>`: Custom instructions for final report synthesis.
 
-#### Output & Results
-- `--output-dir <dir>`: Directory where scan results and reports are saved. **Must be outside target repository.**
-- `--archive-existing`: Move prior results in `output-dir` to an archive timestamped directory rather than failing.
-- `--fail-on-severity <critical|high|medium|low>`: Exit with return code `1` if completed scan detects issues at or above specified severity.
+#### Output Configuration
+- `--output-dir <dir>`: Directory path for scan artifacts. Do not place this directory inside the target repository.
+- `--archive-existing`: Move existing results in the output directory to an archive path.
+- `--fail-on-severity <critical|high|medium|low>`: Return exit code `1` if findings match or exceed specified severity.
 
-#### Remediation & Patching
-- `--patch`: Attempt to generate automated, verified fixes for identified vulnerabilities.
-- `--patch-severity <critical|high|medium|low>`: Minimum severity threshold to generate patches for.
-- `--create-pr`: Create a draft GitHub pull request containing verified patches.
+#### Remediation and Patching
+- `--patch`: Generate verified code fixes for discovered vulnerabilities.
+- `--patch-severity <critical|high|medium|low>`: Minimum severity threshold required for patch generation.
+- `--create-pr`: Create a draft GitHub pull request with verified patches.
 
-#### Model & Inference Provider Settings
-- `--provider <openai|openrouter|fireworks|amazon-bedrock>`: Inference backend (default: `openai`).
-- `--model <model-name>`: Specific model identifier.
-- `--effort <minimal|low|medium|high|xhigh|max>`: Model reasoning effort level (default: `high`).
-- `--auth <auto|chatgpt|api-key>`: Authentication source.
-- `--safety-identifier <id>`: Stable hashed end-user identifier for multi-tenant billing/safety tracking.
-- `--codex <KEY=VALUE>`: Deep-merge override settings into Codex config (e.g., `--codex model_reasoning_effort="high"`).
+#### Model and Provider Configuration
+- `--provider <openai|openrouter|fireworks|amazon-bedrock>`: LLM provider (default: `openai`).
+- `--model <model-name>`: Model identifier.
+- `--effort <minimal|low|medium|high|xhigh|max>`: Reasoning effort level (default: `high`).
+- `--auth <auto|chatgpt|api-key>`: Credential source.
+- `--safety-identifier <id>`: User identifier string for multi-tenant tracking.
+- `--codex <KEY=VALUE>`: Configuration overrides for the Codex engine.
 
 ---
 
 ### 2. `scan-components <repository>`
 
-Decompose large projects or monorepos into distinct components and scan each in isolation with deduplicated global finding matching.
+Split large repositories into components and scan each component separately.
 
 ```bash
-# Auto-plan components:
+# Generate component plan:
 npx @openai/codex-security scan-components /path/to/repo --auto --plan-only --output-dir /tmp/plan
 
-# Run scan with plan:
+# Run scans from plan file:
 npx @openai/codex-security scan-components /path/to/repo \
   --components-file /tmp/plan/components.json \
   --workers 4 \
@@ -94,22 +94,22 @@ npx @openai/codex-security scan-components /path/to/repo \
 ```
 
 #### Options:
-- `--component <path>`: Explicitly define a component directory. Repeatable.
-- `--auto`: Automatically detect project components and boundaries.
-- `--plan-only`: Generate and save the component plan without executing scans.
-- `--components-file <file.json>`: Path to custom JSON component configuration.
+- `--component <path>`: Define a component path. Repeat flag for multiple components.
+- `--auto`: Automatically detect component boundaries.
+- `--plan-only`: Create the plan file without executing scans.
+- `--components-file <file.json>`: Path to input JSON plan file.
 
 ---
 
 ### 3. `findings`
 
-Manage findings across repository scans.
+Manage findings across scan runs.
 
 - **List Open Findings**:
   ```bash
   npx @openai/codex-security findings list [repository]
   ```
-- **Mark False Positive**:
+- **Mark Finding as False Positive**:
   ```bash
   npx @openai/codex-security findings false-positive <occurrence-id> --reason "<explanation>"
   ```
@@ -118,17 +118,17 @@ Manage findings across repository scans.
 
 ### 4. `scans`
 
-Inspect historical scans and session logs.
+Inspect previous scan records and logs.
 
 - **List Scans**:
   ```bash
   npx @openai/codex-security scans list [repository] [--scan-root <dir>]
   ```
-- **Show Scan Details**:
+- **Show Scan Summary**:
   ```bash
   npx @openai/codex-security scans show <scan-id> [--show-linked-findings]
   ```
-- **View Scan Logs & Worker Activity**:
+- **Read Scan Logs**:
   ```bash
   npx @openai/codex-security scans logs <scan-id>
   ```
@@ -137,7 +137,7 @@ Inspect historical scans and session logs.
 
 ### 5. `export`
 
-Export finding data from a completed scan directory into standard formats.
+Export scan findings to file formats.
 
 ```bash
 npx @openai/codex-security export \
@@ -148,24 +148,24 @@ npx @openai/codex-security export \
 
 ---
 
-### 6. `login` & `logout`
+### 6. `login` and `logout`
 
-Manage authentication and credential storage.
+Manage authentication state.
 
 ```bash
-# Interactive browser OAuth
+# Interactive login
 npx @openai/codex-security login
 
-# Headless / remote device authentication
+# Device authentication
 npx @openai/codex-security login --device-auth
 
-# Store API key from stdin
+# Store API key from standard input
 printenv OPENAI_API_KEY | npx @openai/codex-security login --with-api-key
 
-# Check login status
+# Check status
 npx @openai/codex-security login status
 
-# Log out and clear stored tokens
+# Log out
 npx @openai/codex-security logout
 ```
 
@@ -173,10 +173,9 @@ npx @openai/codex-security logout
 
 ### 7. `publish`
 
-Publish scan findings to issue trackers.
+Send findings to issue tracking platforms.
 
 ```bash
-# Publish to Linear
 npx @openai/codex-security publish scan <scan-id> \
   --to linear \
   --linear-team <team-id> \
@@ -187,10 +186,10 @@ npx @openai/codex-security publish scan <scan-id> \
 
 ## Exit Codes
 
-| Code | Meaning |
+| Code | Description |
 | :--- | :--- |
-| `0` | Scan completed successfully with no policy failure (or findings below `--fail-on-severity`). |
-| `1` | Scan completed successfully and found vulnerabilities matching or exceeding `--fail-on-severity`. |
-| `2` | Scan incomplete, configuration error, missing dependencies, or invalid parameters. |
-| `130` | Interrupted by `SIGINT` (Ctrl+C). |
-| `143` | Terminated by `SIGTERM`. |
+| `0` | Scan completed successfully. No findings exceeded the failure severity threshold. |
+| `1` | Scan completed successfully. One or more findings exceeded the failure severity threshold. |
+| `2` | Scan failed due to invalid arguments, missing dependencies, or execution errors. |
+| `130` | Execution stopped by `SIGINT` (Ctrl+C). |
+| `143` | Execution stopped by `SIGTERM`. |

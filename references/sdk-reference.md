@@ -1,6 +1,6 @@
 # Codex Security TypeScript SDK Reference
 
-The `@openai/codex-security` package exports a high-level TypeScript API for automating scans, validating findings, component planning, and integrating security audits into CI/CD pipelines.
+The `@openai/codex-security` package provides a programmatic TypeScript API for running scans, validating findings, planning components, and integrating security checks into build pipelines.
 
 ## Installation
 
@@ -8,7 +8,9 @@ The `@openai/codex-security` package exports a high-level TypeScript API for aut
 npm install @openai/codex-security
 ```
 
-*Requirements*: Node.js 22.13.0+ (or 24.x, 26.x), Python 3.10+.
+System Requirements:
+- Node.js 22.13.0 or later.
+- Python 3.10 or later.
 
 ---
 
@@ -33,7 +35,7 @@ import {
 
 ## 1. Class: `CodexSecurity`
 
-The central client for running scans and performing individual finding validations.
+The `CodexSecurity` class executes security scans and finding validations.
 
 ### Constructor
 
@@ -41,23 +43,23 @@ The central client for running scans and performing individual finding validatio
 const security = new CodexSecurity(options?: CodexSecurityConfig);
 ```
 
-#### `CodexSecurityConfig`:
-- `pluginPath?: string`: Path to custom Codex Security plugin directory or ZIP (defaults to bundled plugin).
-- `pythonPath?: string`: Custom Python interpreter path.
-- `codexOverrides?: Record<string, any>`: Deep-merge override dictionary for Codex engine configuration.
+#### `CodexSecurityConfig` Properties:
+- `pluginPath?: string`: Path to custom plugin folder or archive.
+- `pythonPath?: string`: Path to Python executable.
+- `codexOverrides?: Record<string, any>`: Configuration settings merged into the Codex engine configuration.
 
 ### Methods
 
 #### `security.run(repositoryPath, options?): Promise<ScanResult>`
 
-Executes a full security scan on the specified repository.
+Execute a full scan on the target repository.
 
 ```ts
 const result = await security.run("/path/to/repository", {
   outputDir: "/path/outside/repository/results",
   mode: "standard", // "standard" | "deep"
   target: {
-    kind: "repository", // or { kind: "diff", ref: "origin/main" }
+    kind: "repository",
   },
   knowledgeBasePaths: ["docs/threat_model.md"],
   maxCostUsd: 15.00,
@@ -76,7 +78,7 @@ const result = await security.run("/path/to/repository", {
 
 #### `security.validate(options): Promise<ValidationResult>`
 
-Validates an individual candidate finding without altering the repository or recording a full scan.
+Validate an individual candidate finding without modifying repository files or saving scan history.
 
 ```ts
 const validation = await security.validate({
@@ -90,13 +92,13 @@ const validation = await security.validate({
   auth: "auto",
 });
 
-console.log("Disposition:", validation.disposition); // "reportable" | "suppressed" | "not_applicable" | "deferred"
+console.log("Disposition:", validation.disposition);
 console.log("Report:\n", validation.report);
 ```
 
 #### `security.preflight(repositoryPath, options?): Promise<ScanPreflight>`
 
-Validates local inputs, path resolution, and configuration without invoking models or network.
+Validate configuration, arguments, and local paths without invoking LLM models or network endpoints.
 
 ```ts
 const preflight = await security.preflight("/path/to/repo", { mode: "standard" });
@@ -107,7 +109,7 @@ if (!preflight.ready) {
 
 #### `security.close(): Promise<void>`
 
-Terminates background worker processes and cleans up temporary execution locks. Always call in a `finally` block.
+Stop background workers and remove process locks. Always call this method in a `finally` block.
 
 ---
 
@@ -125,7 +127,7 @@ const result = await runComponentScans({
   ],
   workers: 4,
   scanOptions: {
-    maxCostUsd: 5.0, // per component
+    maxCostUsd: 5.0,
     auth: "api-key",
   },
   onComponentProgress: (event) => {
@@ -143,8 +145,8 @@ import { importGitHubCodeScanningAlerts, CodexSecurity } from "@openai/codex-sec
 
 const alerts = await importGitHubCodeScanningAlerts({
   repository: "org/repo",
-  alertNumbers: [42, 43], // omit to import all open alerts
-  state: "open", // "open" | "closed" | "dismissed" | "fixed" | "all"
+  alertNumbers: [42, 43],
+  state: "open",
   githubToken: process.env.GITHUB_TOKEN,
 });
 
@@ -176,9 +178,7 @@ console.log(`Input Tokens: ${cost.inputTokens}, Output Tokens: ${cost.outputToke
 
 ---
 
-## 5. ScanResult Object Structure
-
-`ScanResult` encapsulates all findings, metadata, and generated artifact references:
+## 5. `ScanResult` Interface
 
 ```ts
 interface ScanResult {

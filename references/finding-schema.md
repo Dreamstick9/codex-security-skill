@@ -1,22 +1,22 @@
-# Finding Schema & Vulnerability Taxonomy
+# Finding Schema and Vulnerability Taxonomy
 
-Codex Security structures findings using a rigorous, standardized contract ensuring full traceability from vulnerable sink to root cause, evidence, and remediation advice.
+Codex Security uses a standard data format for all security findings. This format provides traceability from source input to vulnerable sink, evidence, and remediation code.
 
 ## Severity Levels
 
 | Severity | Definition | Examples |
 | :--- | :--- | :--- |
-| `critical` | Direct, remote, unauthenticated exploit leading to code execution, credential takeover, or severe data compromise. | Remote Code Execution (RCE), SQL Injection with auth bypass, Unauthenticated SSRF to cloud metadata. |
-| `high` | Significant vulnerability requiring minimal privileges or user interaction, leading to sensitive data exposure or privilege escalation. | IDOR leaking private PII, Stored XSS in admin console, Hardcoded production secrets. |
-| `medium` | Vulnerability requiring complex preconditions or specific environmental configurations. | CSRF on non-critical actions, Reflected XSS, Weak cryptography / hash algorithm usage. |
-| `low` | Minor security weakness, defense-in-depth failure, or subtle information disclosure. | Verbose error stack traces, Missing security headers, Insecure cookie flags. |
-| `informational` | Best practice improvement or code hardening suggestion without direct exploitability. | Deprecated crypto usage in non-security context, Redundant validation checks. |
+| `critical` | Direct remote exploit without authentication leading to arbitrary code execution, privilege takeover, or critical data loss. | Remote Code Execution, Authentication Bypass, Server-Side Request Forgery to cloud metadata. |
+| `high` | Vulnerability requiring minimal authentication or user interaction leading to private data exposure or privilege escalation. | Insecure Direct Object References (IDOR), Stored Cross-Site Scripting, Exposed production secrets. |
+| `medium` | Vulnerability requiring non-standard preconditions or specific environment configurations. | Cross-Site Request Forgery (CSRF), Reflected XSS, Weak cryptographic primitives. |
+| `low` | Minor security defect, defense-in-depth weakness, or information leak. | Detailed error stack traces in responses, Missing security headers, Insecure cookie attributes. |
+| `informational` | Code hardening suggestion or best practice improvement without direct exploitability. | Deprecated crypto function used in non-security context, Redundant validation logic. |
 
 ---
 
-## Finding Data Structure (JSON Schema)
+## Finding JSON Structure
 
-Every finding in `findings.json` conforms to the following schema:
+Every record in `findings.json` conforms to the following schema:
 
 ```json
 {
@@ -34,21 +34,21 @@ Every finding in `findings.json` conforms to the following schema:
     "snippet": "const user = await db.raw(`SELECT * FROM users WHERE id = '${req.params.id}'`);"
   },
   "disposition": "reportable",
-  "description": "User-supplied parameter `req.params.id` is concatenated directly into a raw SQL query without parameterized binding or sanitization, enabling arbitrary SQL execution.",
-  "exploitability": "High: Accessible via public GET /users/:id endpoint without authentication.",
-  "impact": "An attacker can read entire database contents, bypass authentication, or modify tables.",
-  "rootCause": "Direct string interpolation in `db.raw` query rather than utilizing parameterized placeholders.",
+  "description": "User input from req.params.id is concatenated directly into a raw SQL query string without parameter binding.",
+  "exploitability": "High: The endpoint is exposed publicly over HTTP without authentication.",
+  "impact": "An attacker can read database tables, bypass authentication checks, or modify records.",
+  "rootCause": "String interpolation in raw SQL query instead of parameterized placeholders.",
   "remediation": {
-    "guidance": "Use parameterized query bindings: `db.raw('SELECT * FROM users WHERE id = ?', [req.params.id])` or the query builder `db('users').where({ id: req.params.id }).first()`.",
+    "guidance": "Use parameterized query bindings or a query builder method.",
     "suggestedFixDiff": "--- a/src/controllers/userController.ts\n+++ b/src/controllers/userController.ts\n@@ -45,3 +45,3 @@\n-const user = await db.raw(`SELECT * FROM users WHERE id = '${req.params.id}'`);\n+const user = await db('users').where({ id: req.params.id }).first();"
   },
   "evidence": {
     "source": "req.params.id in Express handler",
     "sink": "db.raw execution",
     "trace": [
-      "src/routes/users.ts:12 (Route registration)",
-      "src/controllers/userController.ts:42 (Handler entry)",
-      "src/controllers/userController.ts:45 (Raw query construction)"
+      "src/routes/users.ts:12",
+      "src/controllers/userController.ts:42",
+      "src/controllers/userController.ts:45"
     ],
     "proofOfConcept": "curl -k 'https://example.com/users/1%27%20UNION%20SELECT%20null,username,password%20FROM%20admins--'"
   },
@@ -64,14 +64,13 @@ Every finding in `findings.json` conforms to the following schema:
 
 ## Validation Dispositions
 
-When candidates are analyzed in the validation phase, one of four dispositions is assigned:
+During the validation phase, each candidate finding is assigned one of four dispositions:
 
 1. `reportable`:
-   - High confidence vulnerability.
-   - Traced source-to-sink dataflow with proven reachability or reproducible test/PoC.
+   - Confirmed vulnerability with complete source-to-sink reachability or reproducible test proof.
 2. `suppressed`:
-   - Valid security concern that is mitigated upstream or matches an intentional, recorded user false-positive triage rule.
+   - Defect mitigated by upstream security controls or marked as an accepted false positive.
 3. `not_applicable`:
-   - The code is dead, disabled behind compile flags, or the environment lacks the necessary attack surface (e.g., test-only mock).
+   - Code is not reachable, disabled by configuration, or located in test fixtures only.
 4. `deferred`:
-   - Requires complex staging environment or third-party cloud setup that cannot be established within the scan constraints.
+   - Verification requires external infrastructure not available in the current scan run.

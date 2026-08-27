@@ -10,57 +10,59 @@ description: >-
 
 # Codex Security Skill
 
-The `codex-security` skill enables comprehensive static and dynamic security analysis, vulnerability discovery, evidence-based validation, automated patch remediation, and scan lifecycle management using the `@openai/codex-security` CLI and TypeScript SDK.
+The `codex-security` skill provides procedures for security scanning, vulnerability discovery, evidence-based validation, and automated patch remediation with `@openai/codex-security`.
 
-## Core Concepts & Operating Principles
+## Principles of Operation
 
-1. **Security Scan Modes**:
-   - **Standard Mode (`scan .` / `mode: "standard"`)**: A single-pass security audit across the repository or scoped paths. Identifies vulnerabilities, validates findings, and generates a structured report.
-   - **Deep Mode (`scan . --mode deep` / `mode: "deep"`)**: Multi-pass, concurrent discovery driven by worker subagents (up to 96 hours max discovery time, customizable `--workers`, `--subagents`, `--stop-after-no-new`).
-   - **Diff Scan (`scan . --diff <ref>` / `--working-tree`)**: Focused incremental audit reviewing only modified files or unstaged changes.
-   - **Component Scan (`scan-components .`)**: Decomposes monorepos or large multi-package projects into scoped components with automated deduplication and combined reporting.
+1. **Scan Modes**:
+   - **Standard Mode (`scan .` / `mode: "standard"`)**: A single-pass security audit of a repository or defined file paths.
+   - **Deep Mode (`scan . --mode deep` / `mode: "deep"`)**: A multi-pass concurrent audit driven by worker subagents.
+   - **Diff Scan (`scan . --diff <ref>` / `--working-tree`)**: A targeted audit of changed files or uncommitted modifications.
+   - **Component Scan (`scan-components .`)**: A split audit for large monorepos with deduplicated findings.
 
-2. **Isolated Artifact Storage**:
-   - Always place output scan directories **outside** the scanned Git repository (e.g., `/tmp/codex-security-results/<scan_id>` or `~/.codex-security/scans/<scan_id>`).
-   - Output directories must be private (`chmod 700` on macOS/Linux) and empty before scanning (or use `--archive-existing` / `archiveExisting: true`).
+2. **Artifact Isolation**:
+   - Always store scan output directories outside the target source repository (for example, in `/tmp/codex-security-results/<scan_id>`).
+   - Output directories must be private (`chmod 700`) and empty before execution.
 
-3. **Validation & Dispositions**:
-   - All candidate findings undergo rigorous evidence-based validation:
-     - `reportable`: Validated vulnerability with reproducible proof or rigorous static source-to-sink trace.
-     - `suppressed`: Finding dismissed based on existing security controls or recorded false-positive feedback.
-     - `not_applicable`: Code path unreachable or prerequisites impossible in target environment.
-     - `deferred`: Insufficient evidence or unprovable dynamic state without full environment.
+3. **Validation Dispositions**:
+   - Every candidate finding receives an evidence-based disposition:
+     - `reportable`: Validated vulnerability with reproducible proof or confirmed static trace.
+     - `suppressed`: Finding dismissed by verified security controls or recorded triage rules.
+     - `not_applicable`: Code is dead, unmounted, or unreachable in the execution environment.
+     - `deferred`: Finding requires external environment setup that is unavailable during the scan.
 
-4. **Progressive Disclosure References**:
-   - Complete CLI documentation: [CLI Reference](./references/cli-reference.md)
-   - TypeScript SDK API & Types: [SDK Reference](./references/sdk-reference.md)
-   - Vulnerability Finding Schemas: [Finding Schema](./references/finding-schema.md)
-   - Validation Rubrics & Proof Methods: [Validation Rubric](./references/validation-rubric.md)
-   - Threat Modeling & Attack Paths: [Threat Modeling Guide](./references/threat-modeling.md)
-   - Patch Remediation & Risk Analysis: [Remediation & Patch Risk Guide](./references/remediation-and-patch-risk.md)
+4. **Reference Documentation**:
+   - [CLI Reference](./references/cli-reference.md)
+   - [TypeScript SDK Reference](./references/sdk-reference.md)
+   - [Finding Schema](./references/finding-schema.md)
+   - [Validation Rubric](./references/validation-rubric.md)
+   - [Threat Modeling Guide](./references/threat-modeling.md)
+   - [Remediation and Patch Risk Guide](./references/remediation-and-patch-risk.md)
 
 ---
 
-## Step-by-Step Workflows
+## Standard Workflows
 
-### 1. Prerequisites & Authentication
+### 1. Authentication and Setup
 
-Codex Security requires **Node.js 22.13.0+** and **Python 3.10+**.
+Requirements:
+- Node.js 22.13.0 or later.
+- Python 3.10 or later.
 
-#### Authentication Methods
-- **ChatGPT OAuth Login (Interactive / Local)**:
+#### Authentication Procedures
+- **Interactive Login**:
   ```bash
   npx @openai/codex-security login
-  # Or for remote/headless sessions:
+  ```
+- **Device Authentication (Headless)**:
+  ```bash
   npx @openai/codex-security login --device-auth
   ```
-- **API Key (CI/CD or Non-Interactive)**:
+- **API Key Configuration**:
   ```bash
   export OPENAI_API_KEY="sk-..."
-  # Or save key to private credential storage:
-  printenv OPENAI_API_KEY | npx @openai/codex-security login --with-api-key
   ```
-- **Alternative Providers (OpenRouter, Fireworks, AWS Bedrock)**:
+- **Third-Party Inference Providers**:
   ```bash
   # OpenRouter
   export OPENROUTER_API_KEY="..."
@@ -74,29 +76,27 @@ Codex Security requires **Node.js 22.13.0+** and **Python 3.10+**.
 
 ---
 
-### 2. Running a Standard Repository Scan
+### 2. Standard Repository Scan
 
-To scan an entire repository or target folder:
-
-1. Create a dedicated output directory outside the repository:
+1. Create a clean output directory:
    ```bash
    SCAN_OUT="/tmp/codex-security-$(date +%s)"
    mkdir -p "$SCAN_OUT"
    ```
-2. Execute the scan:
+2. Run the scan command:
    ```bash
    npx @openai/codex-security scan /path/to/repo \
      --output-dir "$SCAN_OUT" \
      --fail-on-severity high
    ```
-3. For scoped audits, specify one or more `--path` arguments:
+3. To limit scope to specific paths:
    ```bash
    npx @openai/codex-security scan /path/to/repo \
      --path src/auth \
      --path src/api \
      --output-dir "$SCAN_OUT"
    ```
-4. Include security architecture or policy context via `--knowledge-base`:
+4. To add threat models or architecture context:
    ```bash
    npx @openai/codex-security scan /path/to/repo \
      --knowledge-base docs/security/threat_model.md \
@@ -105,17 +105,15 @@ To scan an entire repository or target folder:
 
 ---
 
-### 3. Reviewing PRs and Working Tree Diffs
+### 3. Pull Request and Diff Reviews
 
-Run targeted incremental scans during code review or pre-commit checks:
-
-- **Scan Committed Diff Against Base Branch**:
+- **Scan Committed Diff**:
   ```bash
   npx @openai/codex-security scan /path/to/repo \
     --diff origin/main \
     --output-dir /tmp/pr-scan-results
   ```
-- **Scan Uncommitted Working-Tree Changes**:
+- **Scan Working-Tree Changes**:
   ```bash
   npx @openai/codex-security scan /path/to/repo \
     --working-tree \
@@ -124,9 +122,9 @@ Run targeted incremental scans during code review or pre-commit checks:
 
 ---
 
-### 4. Deep Multi-Worker Security Audits
+### 4. Deep Multi-Worker Scan
 
-For thorough, multi-pass exploration on high-criticality assets:
+Execute an extended search on high-risk repositories:
 
 ```bash
 npx @openai/codex-security scan /path/to/repo \
@@ -141,18 +139,16 @@ npx @openai/codex-security scan /path/to/repo \
 
 ---
 
-### 5. Monorepo Multi-Component Scanning
+### 5. Multi-Component Scanning for Monorepos
 
-When dealing with large monorepos with multiple services/libraries:
-
-1. **Auto-Generate a Component Plan**:
+1. Generate the component plan:
    ```bash
    npx @openai/codex-security scan-components /path/to/repo \
      --auto \
      --plan-only \
      --output-dir /tmp/monorepo-plan
    ```
-2. **Execute Component Scans with Shared Matching**:
+2. Run the component scans:
    ```bash
    npx @openai/codex-security scan-components /path/to/repo \
      --components-file /tmp/monorepo-plan/components.json \
@@ -162,41 +158,38 @@ When dealing with large monorepos with multiple services/libraries:
 
 ---
 
-### 6. Validating Findings & Triaging False Positives
+### 6. Finding Management and Triage
 
-#### Inspecting Findings History
-```bash
-# List open findings across repository scans
-npx @openai/codex-security findings list /path/to/repo
-
-# List historical scans
-npx @openai/codex-security scans list /path/to/repo
-
-# View specific scan details
-npx @openai/codex-security scans show <scan-id> --show-linked-findings
-```
-
-#### Dismissing False Positives
-To prevent dismissed findings from reappearing in future scans:
-```bash
-npx @openai/codex-security findings false-positive <occurrence-id> \
-  --reason "Input is sanitized by ApiGateway validation middleware before reaching this handler."
-```
+- **List Open Findings**:
+  ```bash
+  npx @openai/codex-security findings list /path/to/repo
+  ```
+- **List Previous Scans**:
+  ```bash
+  npx @openai/codex-security scans list /path/to/repo
+  ```
+- **Display Scan Details**:
+  ```bash
+  npx @openai/codex-security scans show <scan-id> --show-linked-findings
+  ```
+- **Register False Positive**:
+  ```bash
+  npx @openai/codex-security findings false-positive <occurrence-id> \
+    --reason "Input is validated by API gateway middleware before reaching this function."
+  ```
 
 ---
 
-### 7. Exporting Findings to SARIF, JSON, and CSV
+### 7. Exporting Findings
 
-Codex Security generates native formats and exports:
-
-- **SARIF (GitHub Code Scanning upload)**:
+- **SARIF (GitHub Code Scanning)**:
   ```bash
   npx @openai/codex-security export \
     --scan-dir /tmp/scan-results \
     --format sarif \
     --output results.sarif
   ```
-- **JSON & CSV**:
+- **JSON and CSV**:
   ```bash
   npx @openai/codex-security export --scan-dir /tmp/scan-results --format json --output findings.json
   npx @openai/codex-security export --scan-dir /tmp/scan-results --format csv --output findings.csv
@@ -204,61 +197,25 @@ Codex Security generates native formats and exports:
 
 ---
 
-### 8. Automated Remediation & Verification
+### 8. Automated Remediation
 
-1. **Generate Minimal Verified Patches**:
-   ```bash
-   npx @openai/codex-security scan /path/to/repo \
-     --patch \
-     --patch-severity high \
-     --create-pr \
-     --output-dir /tmp/remediation-scan
-   ```
-2. **Assess Patch Risk**:
-   Evaluates patch changes for behavioral breakage, edge case regressions, or introduced side effects.
+Synthesize patches and verify fixes:
 
----
-
-### 9. TypeScript SDK Programmatic Workflow
-
-```ts
-import { CodexSecurity } from "@openai/codex-security";
-
-const security = new CodexSecurity({
-  codexOverrides: {
-    model_reasoning_effort: "high",
-  },
-});
-
-try {
-  // Preflight check
-  const preflight = await security.preflight("/path/to/repo", {
-    mode: "standard",
-  });
-  console.log("Preflight status:", preflight);
-
-  // Execute scan with cost ceiling and event observation
-  const result = await security.run("/path/to/repo", {
-    outputDir: "/tmp/codex-security-output",
-    maxCostUsd: 10.0,
-    onWorkerStatus: (status) => console.log(`Worker ${status.workerNumber}: ${status.phase}`),
-  });
-
-  console.log(`Scan completed: ${result.scanId}`);
-  console.log(`Report path: ${result.reportPath}`);
-  console.log(`Findings count: ${result.findings.findings.length}`);
-} finally {
-  await security.close();
-}
+```bash
+npx @openai/codex-security scan /path/to/repo \
+  --patch \
+  --patch-severity high \
+  --create-pr \
+  --output-dir /tmp/remediation-scan
 ```
 
 ---
 
-## Helper Scripts & Examples
+## Helper Scripts and Examples
 
-- **Quick Scan Helper**: [`run_security_scan.sh`](./scripts/run_security_scan.sh)
-- **SARIF Exporter**: [`export_sarif.sh`](./scripts/export_sarif.sh)
-- **False Positive Helper**: [`triage_false_positive.sh`](./scripts/triage_false_positive.sh)
-- **CLI Cookbook**: [`cli_recipes.sh`](./examples/cli_recipes.sh)
-- **SDK Scan Script**: [`sdk_scan_example.ts`](./examples/sdk_scan_example.ts)
-- **GitHub Alert Validation Script**: [`sdk_github_validation.ts`](./examples/sdk_github_validation.ts)
+- **Scan Script**: [`scripts/run_security_scan.sh`](./scripts/run_security_scan.sh)
+- **SARIF Exporter**: [`scripts/export_sarif.sh`](./scripts/export_sarif.sh)
+- **Triage Script**: [`scripts/triage_false_positive.sh`](./scripts/triage_false_positive.sh)
+- **CLI Cookbook**: [`examples/cli_recipes.sh`](./examples/cli_recipes.sh)
+- **SDK Scan Script**: [`examples/sdk_scan_example.ts`](./examples/sdk_scan_example.ts)
+- **GitHub Alert Validation Script**: [`examples/sdk_github_validation.ts`](./examples/sdk_github_validation.ts)

@@ -1,44 +1,51 @@
 # OpenAI Codex Security Skill
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Agent Skill](https://img.shields.io/badge/Agent_Skill-Universal-purple.svg)](#-agent-compatibility--installation)
+[![Agent Skill](https://img.shields.io/badge/Agent_Skill-Universal-purple.svg)](#agent-compatibility-and-installation)
 [![npm package](https://img.shields.io/badge/npm-%40openai%2Fcodex--security-red)](https://www.npmjs.com/package/@openai/codex-security)
 
-A universal, production-ready AI agent skill and workflow toolkit for **[OpenAI Codex Security](https://github.com/openai/codex-security)**.
+This repository contains a universal technical skill and workflow toolkit for `@openai/codex-security`.
 
-This skill equips any AI coding agent, autonomous assistant, or CI/CD workflow with automated vulnerability discovery, deep multi-worker audits, PR diff scanning, evidence-backed finding validation, automated patch remediation, risk assessment, false-positive triage, and SARIF/JSON/CSV exports.
+The skill allows automated AI coding agents, developers, and CI/CD pipelines to:
+- Find security vulnerabilities in source code.
+- Execute multi-worker deep security scans.
+- Audit pull request diffs and working tree modifications.
+- Validate candidate findings with reproducible evidence.
+- Generate and verify security patches.
+- Assess patch risk and open pull requests.
+- Export findings in SARIF, JSON, and CSV formats.
 
 ---
 
-## 🤖 Agent Compatibility & Installation
+## Agent Compatibility and Installation
 
-This skill follows the standard **Agent Skill Protocol** (`SKILL.md` with structured YAML frontmatter and progressive disclosure references) and is compatible with any AI coding agent or IDE environment:
+This skill uses the standard Agent Skill Specification (`SKILL.md` with structured YAML metadata and reference documentation). It is compatible with all AI coding agents that support skill discovery.
 
-| Agent / Environment | Skill Directory Path |
+| Environment | Directory Path |
 | :--- | :--- |
-| **Universal Agent Standard** | `.agents/skills/codex-security/` |
-| **Claude Code** | `.claude/skills/codex-security/` or `~/.claude/skills/` |
-| **Cursor / Windsurf / Cline / Roo** | `.agents/skills/codex-security/` or project root |
-| **Antigravity (AGY)** | `.agents/skills/codex-security/` or `~/.gemini/config/skills/` |
-| **Global User Configuration** | `~/.agents/skills/codex-security/` |
+| Universal Agent Standard | `.agents/skills/codex-security/` |
+| Claude Code | `.claude/skills/codex-security/` or `~/.claude/skills/` |
+| Cursor / Windsurf / Cline / Roo | `.agents/skills/codex-security/` |
+| Antigravity | `.agents/skills/codex-security/` or `~/.gemini/config/skills/` |
+| Global User Configuration | `~/.agents/skills/codex-security/` |
 
-### Installation Options
+### Installation
 
-#### 1. Workspace Level (Project-Specific)
-Clone or copy into your project's agent skills directory:
+#### 1. Workspace Level (Single Project)
+Clone this repository into your project directory:
 
 ```bash
 # Standard universal agent directory:
 mkdir -p .agents/skills
 git clone https://github.com/Dreamstick9/codex-security-skill.git .agents/skills/codex-security
 
-# Or for Claude Code:
+# For Claude Code:
 mkdir -p .claude/skills
 git clone https://github.com/Dreamstick9/codex-security-skill.git .claude/skills/codex-security
 ```
 
-#### 2. Global Installation (Available Across All Projects)
-Clone into your global user skills home:
+#### 2. Global Level (All Projects)
+Clone this repository into your user directory:
 
 ```bash
 mkdir -p ~/.agents/skills
@@ -47,75 +54,92 @@ git clone https://github.com/Dreamstick9/codex-security-skill.git ~/.agents/skil
 
 ---
 
-## 📦 What's Included
+## Repository Structure
 
 ```text
 codex-security-skill/
-├── SKILL.md                          # Master agent skill runbook with YAML frontmatter
+├── SKILL.md                          # Main skill instruction file
 ├── references/
-│   ├── cli-reference.md              # Complete CLI syntax, flags, providers & exit codes
-│   ├── sdk-reference.md              # TypeScript SDK API, classes, methods & types
-│   ├── finding-schema.md             # Standardized vulnerability finding JSON schema
-│   ├── validation-rubric.md          # PoC generation, test adaptation & FP dismissal
-│   ├── threat-modeling.md            # STRIDE threat modeling & attack path analysis
-│   └── remediation-and-patch-risk.md # Automated patch synthesis & risk assessment
+│   ├── cli-reference.md              # CLI commands, options, and parameters
+│   ├── sdk-reference.md              # TypeScript SDK classes and interfaces
+│   ├── finding-schema.md             # Finding data structures and severity definitions
+│   ├── validation-rubric.md          # Evidence hierarchy and validation rules
+│   ├── threat-modeling.md            # Threat model analysis and attack paths
+│   └── remediation-and-patch-risk.md # Patch synthesis and risk evaluation
 ├── examples/
-│   ├── cli_recipes.sh                # Practical shell cookbook for CI/CD, PRs & audits
-│   ├── sdk_scan_example.ts           # Programmatic scan example with event streaming
-│   ├── sdk_github_validation.ts      # GitHub Code Scanning alert validation script
-│   └── components_plan.json          # Monorepo multi-component scan configuration
+│   ├── cli_recipes.sh                # Shell command examples
+│   ├── sdk_scan_example.ts           # TypeScript SDK execution example
+│   ├── sdk_github_validation.ts      # GitHub alert validation example
+│   └── components_plan.json          # Multi-component configuration example
 └── scripts/
-    ├── run_security_scan.sh          # Isolated scan runner wrapper
-    ├── export_sarif.sh               # SARIF report exporter
-    └── triage_false_positive.sh      # False-positive triage helper
+    ├── run_security_scan.sh          # Scan runner script
+    ├── export_sarif.sh               # SARIF export script
+    └── triage_false_positive.sh      # False positive registration script
 ```
 
 ---
 
-## ⚡ Quick Start
+## Quick Start
 
 ### Prerequisites
-- Node.js 22.13.0+
-- Python 3.10+
-- OpenAI API Key (`OPENAI_API_KEY`) or ChatGPT account
+- Node.js version 22.13.0 or later.
+- Python version 3.10 or later.
+- Valid OpenAI API credentials or ChatGPT account.
 
 ### Authentication
+
+Set the API key in your environment:
 ```bash
-# Interactive login
-npx @openai/codex-security login
-
-# Headless / remote device authentication
-npx @openai/codex-security login --device-auth
-
-# Or via API key
 export OPENAI_API_KEY="sk-..."
 ```
 
-### 1. Run a Standard Repository Scan
+Or authenticate interactively:
 ```bash
-# Using the helper script
-./scripts/run_security_scan.sh /path/to/project
+npx @openai/codex-security login
+```
 
-# Or directly via CLI
+For headless environments, use device authentication:
+```bash
+npx @openai/codex-security login --device-auth
+```
+
+### 1. Execute a Standard Scan
+
+Run a single-pass security scan on a repository:
+
+```bash
 npx @openai/codex-security scan /path/to/project \
   --output-dir /tmp/scan-results \
   --fail-on-severity high
 ```
 
-### 2. Run a PR / Diff Scan
+Alternatively, use the included shell script:
 ```bash
-# Scan committed changes against base branch
+./scripts/run_security_scan.sh /path/to/project
+```
+
+### 2. Execute a Diff Scan
+
+Scan only files changed in a branch or commit:
+
+```bash
 npx @openai/codex-security scan /path/to/project \
   --diff origin/main \
   --output-dir /tmp/pr-scan-results
+```
 
-# Or scan uncommitted working tree changes
+Scan uncommitted working tree changes:
+
+```bash
 npx @openai/codex-security scan /path/to/project \
   --working-tree \
   --output-dir /tmp/working-tree-scan
 ```
 
-### 3. Deep Multi-Worker Audit
+### 3. Execute a Deep Multi-Worker Scan
+
+Run an extended scan with multiple discovery workers:
+
 ```bash
 npx @openai/codex-security scan /path/to/project \
   --mode deep \
@@ -126,19 +150,25 @@ npx @openai/codex-security scan /path/to/project \
   --output-dir /tmp/deep-scan-results
 ```
 
-### 4. Monorepo Multi-Component Scan
+### 4. Execute a Component Scan
+
+Decompose large projects into distinct components:
+
 ```bash
-# Generate plan
+# Step 1: Create the component plan
 npx @openai/codex-security scan-components /path/to/project --auto --plan-only --output-dir /tmp/plan
 
-# Run scan across all components
+# Step 2: Run scans for all components
 npx @openai/codex-security scan-components /path/to/project \
   --components-file /tmp/plan/components.json \
   --workers 4 \
   --output-dir /tmp/component-results
 ```
 
-### 5. Automated Patching & Draft PR
+### 5. Generate Verified Patches
+
+Synthesize and verify code fixes for high-severity findings:
+
 ```bash
 npx @openai/codex-security scan /path/to/project \
   --patch \
@@ -149,7 +179,7 @@ npx @openai/codex-security scan /path/to/project \
 
 ---
 
-## 🛠️ TypeScript SDK Usage
+## TypeScript SDK Usage
 
 ```ts
 import { CodexSecurity } from "@openai/codex-security";
@@ -163,7 +193,9 @@ try {
     outputDir: "/tmp/results",
     mode: "standard",
     maxCostUsd: 10.0,
-    onWorkerStatus: (status) => console.log(`Worker ${status.workerNumber}: ${status.phase}`),
+    onWorkerStatus: (status) => {
+      console.log(`Worker ${status.workerNumber}: ${status.phase}`);
+    },
   });
 
   console.log(`Scan ID: ${result.scanId}`);
@@ -176,17 +208,17 @@ try {
 
 ---
 
-## 📚 Documentation & References
+## Technical References
 
-- [CLI Reference](references/cli-reference.md) — Comprehensive commands, flags, inference providers, and exit codes.
-- [TypeScript SDK Reference](references/sdk-reference.md) — Client methods, component scans, GitHub alert validation, cost estimation.
-- [Finding Schema & Taxonomy](references/finding-schema.md) — Structured finding format, severity levels, and validation dispositions.
-- [Validation Rubric & Proof Methods](references/validation-rubric.md) — Hierarchy of evidence: crash PoCs, test harnesses, and static proofs.
-- [Threat Modeling Guide](references/threat-modeling.md) — STRIDE analysis, trust boundaries, and attack paths.
-- [Remediation & Patch Risk Analysis](references/remediation-and-patch-risk.md) — Surgical patching, regression tests, and risk assessment rubrics.
+- [CLI Reference](references/cli-reference.md): Complete list of commands, flags, inference providers, and exit codes.
+- [TypeScript SDK Reference](references/sdk-reference.md): SDK classes, methods, events, and configuration options.
+- [Finding Schema](references/finding-schema.md): Data structure for findings, severity levels, and dispositions.
+- [Validation Rubric](references/validation-rubric.md): Rules for evidence hierarchy, dynamic validation, and static analysis.
+- [Threat Modeling](references/threat-modeling.md): STRIDE model, boundary analysis, and attack path procedures.
+- [Remediation and Patch Risk](references/remediation-and-patch-risk.md): Patch creation rules, regression test requirements, and risk metrics.
 
 ---
 
-## 📄 License
+## License
 
-[MIT](LICENSE)
+This project is licensed under the [MIT License](LICENSE).

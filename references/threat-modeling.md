@@ -1,56 +1,51 @@
-# Threat Modeling & Attack Path Analysis
+# Threat Modeling and Attack Path Analysis
 
-Codex Security uses threat modeling principles to discover non-obvious, chained vulnerabilities across trust boundaries.
+Codex Security uses threat modeling principles to identify security risks across component boundaries.
 
-## Threat Modeling Framework (STRIDE Adapted)
+## STRIDE Threat Modeling Categories
 
-When evaluating architecture or analyzing candidate vulnerabilities:
+Evaluate target systems against these six threat categories:
 
-1. **Spoofing**: Can an attacker forge identities, JWT tokens, API keys, session cookies, or origin headers?
-2. **Tampering**: Can parameters, serialized objects, hidden fields, cryptographic MACs, or database records be modified without detection?
-3. **Repudiation**: Can critical security actions (transfers, deletions, permission grants) occur without unalterable audit trails?
-4. **Information Disclosure**: Are secrets, tokens, debug traces, PII, internal IPs, or tenant data exposed via responses, logs, or side channels?
-5. **Denial of Service**: Can unauthenticated requests exhaust CPU (ReDoS, quadratic algorithms), memory (decompression bombs), disk, or connection pools?
-6. **Elevation of Privilege**: Can a low-privileged tenant, guest user, or standard token perform administrative actions (IDOR, missing role checks, mass assignment)?
+1. **Spoofing**: Can an attacker forge identity tokens, session cookies, API keys, or origin headers?
+2. **Tampering**: Can an attacker modify request parameters, serialized objects, database records, or configuration files?
+3. **Repudiation**: Can critical state changes (user deletion, permission changes, fund transfers) occur without audit logs?
+4. **Information Disclosure**: Are secrets, tokens, debug traces, or tenant records returned in responses or error logs?
+5. **Denial of Service**: Can an unauthenticated request exhaust memory, disk space, CPU cycles, or thread pools?
+6. **Elevation of Privilege**: Can an unprivileged user execute administrator actions (for example, via IDOR or missing role checks)?
 
 ---
 
-## Attack Path Analysis
+## Attack Path Components
 
-Attack paths document the exact multi-step progression from initial access to objective impact:
+An attack path documents the sequence of steps an attacker takes from entry point to target impact:
 
 ```text
-[Step 1: Entry Point] ──► [Step 2: Perimeter Bypass] ──► [Step 3: Lateral Movement] ──► [Step 4: Impact Sink]
-(Unauth Webhook API)        (Missing HMAC Signature)       (Internal RPC injection)       (Database Exfiltration)
+[Step 1: Entry Point] ──► [Step 2: Perimeter Bypass] ──► [Step 3: Internal Pivot] ──► [Step 4: Sink Impact]
 ```
 
-### Key Components of an Attack Path:
+### Required Fields for Attack Paths:
 
 1. **Preconditions**:
-   - Network location (Internet-facing vs VPC-internal).
-   - Authentication status (Anonymous, standard user, admin).
-   - System prerequisites (Specific database engine, OS features, specific config flags).
+   - Network access requirements (Internet-facing or internal VPC).
+   - Authentication requirements (Anonymous, standard user, or administrator).
+   - System configuration prerequisites.
 2. **Boundary Crossings**:
-   - Untrusted internet to DMZ.
-   - DMZ to internal microservices.
-   - User space to Kernel space.
-   - Tenant A space to Tenant B space (Cross-Tenant violation).
-3. **Exploitation Mechanism**:
-   - The exact vulnerability exploited at each transition node.
-4. **Final Impact**:
-   - Confidentiality, Integrity, or Availability loss metrics.
+   - External Internet to edge service.
+   - Edge service to internal database.
+   - Tenant A data boundary to Tenant B data boundary.
+3. **Exploit Mechanism**:
+   - The specific software defect exploited at each step.
+4. **Impact Metric**:
+   - Severity of data loss, integrity violation, or service disruption.
 
 ---
 
-## Providing Knowledge Base Threat Models to Scans
+## Supplying Threat Models to Scans
 
-You can provide existing threat model documents or system architecture diagrams (in Markdown/PDF) directly to Codex Security scans using the `--knowledge-base` flag:
+Provide existing threat models or architecture documents to the scanner using the `--knowledge-base` flag:
 
 ```bash
 npx @openai/codex-security scan /path/to/repo \
-  --knowledge-base docs/architecture/threat_model.md \
-  --knowledge-base docs/security/trust_boundaries.md \
-  --output-dir /tmp/context-aware-scan
+  --knowledge-base docs/security/threat_model.md \
+  --output-dir /tmp/threat-model-scan
 ```
-
-This grounds discovery workers in the project's explicit security invariants and intended trust boundaries.
