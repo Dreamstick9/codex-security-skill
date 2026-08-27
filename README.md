@@ -1,12 +1,49 @@
-# OpenAI Codex Security Skill for Antigravity (AGY)
+# OpenAI Codex Security Skill
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Antigravity Skill](https://img.shields.io/badge/Antigravity-Skill-green.svg)](https://antigravity.google)
+[![Agent Skill](https://img.shields.io/badge/Agent_Skill-Universal-purple.svg)](#-agent-compatibility--installation)
 [![npm package](https://img.shields.io/badge/npm-%40openai%2Fcodex--security-red)](https://www.npmjs.com/package/@openai/codex-security)
 
-A fully-fledged **Antigravity (AGY)** skill for **[OpenAI Codex Security](https://github.com/openai/codex-security)**.
+A universal, production-ready AI agent skill and workflow toolkit for **[OpenAI Codex Security](https://github.com/openai/codex-security)**.
 
-This skill equips Antigravity AI agents with automated vulnerability discovery, deep multi-worker audits, PR diff scanning, evidence-backed finding validation, automated patch remediation, risk assessment, false-positive triage, and SARIF/JSON/CSV exports.
+This skill equips any AI coding agent, autonomous assistant, or CI/CD workflow with automated vulnerability discovery, deep multi-worker audits, PR diff scanning, evidence-backed finding validation, automated patch remediation, risk assessment, false-positive triage, and SARIF/JSON/CSV exports.
+
+---
+
+## 🤖 Agent Compatibility & Installation
+
+This skill follows the standard **Agent Skill Protocol** (`SKILL.md` with structured YAML frontmatter and progressive disclosure references) and is compatible with any AI coding agent or IDE environment:
+
+| Agent / Environment | Skill Directory Path |
+| :--- | :--- |
+| **Universal Agent Standard** | `.agents/skills/codex-security/` |
+| **Claude Code** | `.claude/skills/codex-security/` or `~/.claude/skills/` |
+| **Cursor / Windsurf / Cline / Roo** | `.agents/skills/codex-security/` or project root |
+| **Antigravity (AGY)** | `.agents/skills/codex-security/` or `~/.gemini/config/skills/` |
+| **Global User Configuration** | `~/.agents/skills/codex-security/` |
+
+### Installation Options
+
+#### 1. Workspace Level (Project-Specific)
+Clone or copy into your project's agent skills directory:
+
+```bash
+# Standard universal agent directory:
+mkdir -p .agents/skills
+git clone https://github.com/Dreamstick9/codex-security-skill.git .agents/skills/codex-security
+
+# Or for Claude Code:
+mkdir -p .claude/skills
+git clone https://github.com/Dreamstick9/codex-security-skill.git .claude/skills/codex-security
+```
+
+#### 2. Global Installation (Available Across All Projects)
+Clone into your global user skills home:
+
+```bash
+mkdir -p ~/.agents/skills
+git clone https://github.com/Dreamstick9/codex-security-skill.git ~/.agents/skills/codex-security
+```
 
 ---
 
@@ -14,7 +51,7 @@ This skill equips Antigravity AI agents with automated vulnerability discovery, 
 
 ```text
 codex-security-skill/
-├── SKILL.md                          # Master skill runbook with YAML frontmatter
+├── SKILL.md                          # Master agent skill runbook with YAML frontmatter
 ├── references/
 │   ├── cli-reference.md              # Complete CLI syntax, flags, providers & exit codes
 │   ├── sdk-reference.md              # TypeScript SDK API, classes, methods & types
@@ -35,28 +72,6 @@ codex-security-skill/
 
 ---
 
-## 🚀 Installation into Antigravity (AGY)
-
-### 1. Workspace Level (Project-Specific)
-Clone or copy this repository into your project's `.agents/skills/codex-security/` directory:
-
-```bash
-mkdir -p .agents/skills
-git clone https://github.com/Dreamstick9/codex-security-skill.git .agents/skills/codex-security
-```
-
-### 2. Global Level (All Projects)
-Clone into your global Antigravity configuration directory:
-
-```bash
-mkdir -p ~/.gemini/config/skills/
-git clone https://github.com/Dreamstick9/codex-security-skill.git ~/.gemini/config/skills/codex-security
-```
-
-Antigravity will automatically discover and mount the skill via progressive disclosure.
-
----
-
 ## ⚡ Quick Start
 
 ### Prerequisites
@@ -69,11 +84,14 @@ Antigravity will automatically discover and mount the skill via progressive disc
 # Interactive login
 npx @openai/codex-security login
 
+# Headless / remote device authentication
+npx @openai/codex-security login --device-auth
+
 # Or via API key
 export OPENAI_API_KEY="sk-..."
 ```
 
-### Run a Standard Scan
+### 1. Run a Standard Repository Scan
 ```bash
 # Using the helper script
 ./scripts/run_security_scan.sh /path/to/project
@@ -84,24 +102,43 @@ npx @openai/codex-security scan /path/to/project \
   --fail-on-severity high
 ```
 
-### Run a PR Diff Scan
+### 2. Run a PR / Diff Scan
 ```bash
+# Scan committed changes against base branch
 npx @openai/codex-security scan /path/to/project \
   --diff origin/main \
   --output-dir /tmp/pr-scan-results
+
+# Or scan uncommitted working tree changes
+npx @openai/codex-security scan /path/to/project \
+  --working-tree \
+  --output-dir /tmp/working-tree-scan
 ```
 
-### Deep Multi-Worker Audit
+### 3. Deep Multi-Worker Audit
 ```bash
 npx @openai/codex-security scan /path/to/project \
   --mode deep \
   --workers 4 \
   --subagents 2 \
   --max-cost 20.00 \
+  --max-time-hours 12 \
   --output-dir /tmp/deep-scan-results
 ```
 
-### Automated Patching & Draft PR
+### 4. Monorepo Multi-Component Scan
+```bash
+# Generate plan
+npx @openai/codex-security scan-components /path/to/project --auto --plan-only --output-dir /tmp/plan
+
+# Run scan across all components
+npx @openai/codex-security scan-components /path/to/project \
+  --components-file /tmp/plan/components.json \
+  --workers 4 \
+  --output-dir /tmp/component-results
+```
+
+### 5. Automated Patching & Draft PR
 ```bash
 npx @openai/codex-security scan /path/to/project \
   --patch \
@@ -112,14 +149,41 @@ npx @openai/codex-security scan /path/to/project \
 
 ---
 
+## 🛠️ TypeScript SDK Usage
+
+```ts
+import { CodexSecurity } from "@openai/codex-security";
+
+const security = new CodexSecurity({
+  codexOverrides: { model_reasoning_effort: "high" },
+});
+
+try {
+  const result = await security.run("/path/to/repository", {
+    outputDir: "/tmp/results",
+    mode: "standard",
+    maxCostUsd: 10.0,
+    onWorkerStatus: (status) => console.log(`Worker ${status.workerNumber}: ${status.phase}`),
+  });
+
+  console.log(`Scan ID: ${result.scanId}`);
+  console.log(`Report: ${result.reportPath}`);
+  console.log(`Findings: ${result.findings.findings.length}`);
+} finally {
+  await security.close();
+}
+```
+
+---
+
 ## 📚 Documentation & References
 
-- [CLI Reference](references/cli-reference.md)
-- [TypeScript SDK Reference](references/sdk-reference.md)
-- [Finding Schema & Taxonomy](references/finding-schema.md)
-- [Validation Rubric & Proof Methods](references/validation-rubric.md)
-- [Threat Modeling Guide](references/threat-modeling.md)
-- [Remediation & Patch Risk Analysis](references/remediation-and-patch-risk.md)
+- [CLI Reference](references/cli-reference.md) — Comprehensive commands, flags, inference providers, and exit codes.
+- [TypeScript SDK Reference](references/sdk-reference.md) — Client methods, component scans, GitHub alert validation, cost estimation.
+- [Finding Schema & Taxonomy](references/finding-schema.md) — Structured finding format, severity levels, and validation dispositions.
+- [Validation Rubric & Proof Methods](references/validation-rubric.md) — Hierarchy of evidence: crash PoCs, test harnesses, and static proofs.
+- [Threat Modeling Guide](references/threat-modeling.md) — STRIDE analysis, trust boundaries, and attack paths.
+- [Remediation & Patch Risk Analysis](references/remediation-and-patch-risk.md) — Surgical patching, regression tests, and risk assessment rubrics.
 
 ---
 
