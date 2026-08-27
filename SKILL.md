@@ -344,12 +344,20 @@ See `references/remediation-and-patch-risk.md` for patch-risk dimensions and reg
 
 ---
 
-## Helper Scripts and Examples
+## Helper Scripts and Tools
 
-- **Scan Script**: [`scripts/run_security_scan.sh`](./scripts/run_security_scan.sh) – safe wrapper with isolation checks, `chmod 700`, `--headless` auto-detection, `--dry-run` and `--archive-existing` support.
-- **SARIF Exporter**: [`scripts/export_sarif.sh`](./scripts/export_sarif.sh) – `export <scanDir> [outputFile]` using `--export-format sarif`.
-- **Triage Script**: [`scripts/triage_false_positive.sh`](./scripts/triage_false_positive.sh) – `findings false-positive <occ> --reason "..."`.
-- **CLI Cookbook**: [`examples/cli_recipes.sh`](./examples/cli_recipes.sh) – recipes for all commands (quick scan, PR diff, deep, components, SARIF, remediation, bulk, publish).
-- **SDK Scan Script**: [`examples/sdk_scan_example.ts`](./examples/sdk_scan_example.ts) – `CodexSecurity.run` with preflight + observers.
-- **GitHub SARIF Validation Script**: [`examples/sdk_github_validation.ts`](./examples/sdk_github_validation.ts) – validate exported findings and upload SARIF via GitHub API (replaces removed `importGitHubCodeScanningAlerts` pattern).
-- **Components Plan**: [`examples/components_plan.json`](./examples/components_plan.json)
+- **Unified CLI Entrypoint**: [`scripts/codex_sec.sh`](./scripts/codex_sec.sh) – all-in-one developer command (`scan`, `diff`, `deep`, `validate`, `patch`, `verify-fix`, `triage`, `export`, `compare`, `components`, `bulk`, `hook`, `doctor`, `info`).
+- **Scan Runner**: [`scripts/run_security_scan.sh`](./scripts/run_security_scan.sh) – safe wrapper with isolation checks, `chmod 700`, `--headless` auto-detection, `--dry-run` and `--archive-existing` support.
+- **Finding Validator**: [`scripts/validate_finding.sh`](./scripts/validate_finding.sh) – validate candidate findings from file, text snippet, or stdin without repo mutation.
+- **Patch Generator**: [`scripts/patch_findings.sh`](./scripts/patch_findings.sh) – synthesize verified fixes and create draft PRs for open scan findings or Linear issues.
+- **Fix Verifier**: [`scripts/verify_fix.sh`](./scripts/verify_fix.sh) – verify that code fixes resolve findings without mutating repository state.
+- **SARIF Exporter**: [`scripts/export_sarif.sh`](./scripts/export_sarif.sh) – export findings to SARIF, JSON, or CSV using `--export-format`.
+- **Triage Helper**: [`scripts/triage_false_positive.sh`](./scripts/triage_false_positive.sh) – record false positive dismissals by occurrence ID and fingerprint.
+- **Scan Inspector & Comparator**: [`scripts/compare_scans.sh`](./scripts/compare_scans.sh) – compare findings across scans, match root causes, show details, stream logs, and rerun scans.
+- **Component Planner & Scanner**: [`scripts/scan_components.sh`](./scripts/scan_components.sh) – auto-plan and execute monorepo component scans.
+- **Bulk Sweep Scanner**: [`scripts/bulk_scan.sh`](./scripts/bulk_scan.sh) – multi-repository scan runner with automatic retries.
+- **Git Hook Installer**: [`scripts/install_git_hook.sh`](./scripts/install_git_hook.sh) – one-command pre-commit security check setup.
+- **CLI Cookbook**: [`examples/cli_recipes.sh`](./examples/cli_recipes.sh) – practical shell recipes for CI/CD and terminal workflows.
+- **SDK Scan Example**: [`examples/sdk_scan_example.ts`](./examples/sdk_scan_example.ts) – TypeScript SDK usage with preflight, progress observers, and cost caps.
+- **GitHub SARIF Validation**: [`examples/sdk_github_validation.ts`](./examples/sdk_github_validation.ts) – validate exported findings and upload SARIF to GitHub Code Scanning.
+- **Monorepo Component Plan**: [`examples/components_plan.json`](./examples/components_plan.json) – example component plan structure.
