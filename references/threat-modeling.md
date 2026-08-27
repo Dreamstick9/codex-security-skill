@@ -42,10 +42,14 @@ An attack path documents the sequence of steps an attacker takes from entry poin
 
 ## Supplying Threat Models to Scans
 
-Provide existing threat models or architecture documents to the scanner using the `--knowledge-base` flag:
+Provide existing threat models or architecture documents to the scanner using the `--knowledge-base` flag (repeatable, file or directory):
 
 ```bash
 npx @openai/codex-security scan /path/to/repo \
   --knowledge-base docs/security/threat_model.md \
-  --output-dir /tmp/threat-model-scan
+  --knowledge-base docs/architecture.md \
+  --output-dir /tmp/threat-model-scan \
+  --headless
+# Output must be outside repository; --headless for CI; --dry-run to preflight without cost
+# SDK: await security.run(repo, { knowledgeBasePaths: ["docs/security/threat_model.md"], outputDir: "/tmp/out" })
 ```

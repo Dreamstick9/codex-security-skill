@@ -1,32 +1,19 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "version": 1,
+  "$schema": "https://openai.com/codex-security/schemas/component-plan.json",
   "components": [
     {
       "name": "Frontend Web Application",
-      "paths": [
-        "apps/web",
-        "packages/ui",
-        "packages/design-system"
-      ],
+      "paths": ["apps/web", "packages/ui", "packages/design-system"],
       "description": "Next.js client-facing web application and shared React components."
     },
     {
       "name": "API Gateway & Authentication Service",
-      "paths": [
-        "apps/api-gateway",
-        "packages/auth",
-        "packages/jwt"
-      ],
+      "paths": ["apps/api-gateway", "packages/auth", "packages/jwt"],
       "description": "Public edge router, JWT validation, and session management microservice."
     },
     {
       "name": "Core Backend & Data Layer",
-      "paths": [
-        "apps/core-service",
-        "packages/database",
-        "packages/orm"
-      ],
+      "paths": ["apps/core-service", "packages/database", "packages/orm"],
       "description": "Internal business logic service and Postgres database access models."
     }
   ]

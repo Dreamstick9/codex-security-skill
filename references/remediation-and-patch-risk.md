@@ -1,11 +1,11 @@
 # Remediation, Fix Verification, and Patch Risk Assessment
 
-Codex Security provides automated remediation tools to generate, test, and assess code patches for identified vulnerabilities.
+Codex Security provides automated remediation tools to generate, test, and assess code patches for identified vulnerabilities. Verified against CLI `scan --patch`, `patch`, `verify-fix`, `validate`.
 
 ## Remediation Sequence
 
 ```text
-[Confirmed Finding]
+[Confirmed Finding (reportable)]
         │
         ▼
 [Synthesize Minimal Patch]
@@ -37,12 +37,40 @@ When generating code fixes:
 
 ---
 
-## 2. Fix Verification (`verify-fix`)
+## 2. Fix Verification (`verify-fix` + standalone `patch`)
 
 Verify the patch with two testing steps:
 
 1. **Regression Testing**: Execute the project test suite (`npm test`, `pytest`, `cargo test`, `go test ./...`) to verify that standard functionality continues to operate.
 2. **Exploit Invariant Testing**: Execute the test harness created during finding validation. The test must confirm that the malicious payload is rejected.
+
+### Inline patching (with scan)
+
+```bash
+npx @openai/codex-security scan /path/to/project \
+  --patch \
+  --patch-severity high \
+  --create-pr \
+  --output-dir /tmp/remediation-run \
+  --headless
+```
+
+### Standalone patching (from saved scan or Linear)
+
+```bash
+# From saved scan id/prefix
+npx @openai/codex-security patch --scan <scanId> --severity high --create-pr
+
+# From explicit issue text/file
+npx @openai/codex-security patch "Fix SQL injection in src/db/users.ts:88" --create-pr
+
+# Verify fixes without mutating repo
+npx @openai/codex-security verify-fix --scan <scanId> --severity high
+
+# Validate a single candidate (no mutation, no history)
+npx @openai/codex-security validate "Candidate finding text" --effort high
+# SDK: await security.validate({ repositoryPath, finding, outputDir })
+```
 
 ---
 
@@ -58,14 +86,6 @@ Evaluate patch risks across three dimensions:
 
 ---
 
-## 4. Automated Patch Generation
+## 4. Automated Patch Generation – SDK
 
-To execute a scan with automated patch generation and draft pull request creation:
-
-```bash
-npx @openai/codex-security scan /path/to/project \
-  --patch \
-  --patch-severity high \
-  --create-pr \
-  --output-dir /tmp/remediation-run
-```
+Inline patching is equivalent to `scan` + `patch`; for programmatic use see `patch`/`verify-fix` CLI and `publishScan` for Linear integration. Preflight without spending: `npx @openai/codex-security scan --dry-run`.

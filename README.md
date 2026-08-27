@@ -82,7 +82,7 @@ codex-security-skill/
 ## Quick Start
 
 ### Prerequisites
-- Node.js version 22.13.0 or later.
+- Node.js `^22.13.0 || ^24.0.0 || ^26.0.0` (see package.json#engines).
 - Python version 3.10 or later.
 - Valid OpenAI API credentials or ChatGPT account.
 
@@ -185,22 +185,28 @@ npx @openai/codex-security scan /path/to/project \
 import { CodexSecurity } from "@openai/codex-security";
 
 const security = new CodexSecurity({
-  codexOverrides: { model_reasoning_effort: "high" },
+  codexOverrides: { model_reasoning_effort: "xhigh" }, // default is xhigh, gpt-5.6-sol
 });
 
 try {
+  // Optional preflight without spending:
+  // const preflight = await security.preflight("/path/to/repository", { outputDir: "/tmp/results" });
   const result = await security.run("/path/to/repository", {
-    outputDir: "/tmp/results",
+    outputDir: "/tmp/results", // must be outside repo; chmod 700
     mode: "standard",
     maxCostUsd: 10.0,
     onWorkerStatus: (status) => {
       console.log(`Worker ${status.workerNumber}: ${status.phase}`);
     },
+    onProgress: (p) => console.log(`${p.phase} ${p.filesCompleted}/${p.filesTotal}`),
   });
 
   console.log(`Scan ID: ${result.scanId}`);
   console.log(`Report: ${result.reportPath}`);
   console.log(`Findings: ${result.findings.findings.length}`);
+  for (const f of result.findings.findings) {
+    console.log(`- [${f.severity.level}] ${f.title} at ${f.locations[0]?.path}:${f.locations[0]?.startLine}`);
+  }
 } finally {
   await security.close();
 }
